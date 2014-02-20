@@ -50,6 +50,44 @@ public class TurtleDemo
 		private boolean cumin;
 		private boolean[] cam;
 		private String com;
+		private byte toByte(boolean a)
+		{
+			if(a)
+			{
+				return 1;
+			} else{
+				return 0;
+			}
+		}
+		public boolean toBool(byte a)
+		{
+			if(a == 1)
+			{
+				return true;
+			}
+			else 
+			{
+				return false;
+			}
+		}
+		public void deserialize(byte[] des)
+		{
+			leftMotor = des[0];
+			rightMotor = des[1];
+			servo1 = des[2];
+			servo2 = des[3];
+			servo3 = des[4];
+			servo4 = des[5];
+			cumin = toBool(des[6]);
+			cam[0] = toBool(des[7]);
+			cam[1] = toBool(des[8]);
+			cam[2] = toBool(des[9]);
+		}
+		public byte[] serialize()
+		{
+			byte[] ret = {leftMotor, rightMotor, servo1, servo2, servo3, servo4, toByte(cumin), toByte(cam[0]), toByte(cam[1]), toByte(cam[2])};
+			return ret;
+		}
 		public boolean takePic()
 		{
 			return (cam[0] || cam[1] || cam[2]);
@@ -57,6 +95,7 @@ public class TurtleDemo
 		public void run()
 		{
 			//send stuffs to arduinos;
+			
 			try {
 				
 				/*
@@ -74,6 +113,7 @@ public class TurtleDemo
 				{
 					serialPort.writeByte((byte) 0);
 					serialPort.writeByte((byte) 0);	
+					timerStop();
 				}
 				else{
 					serialPort.writeByte((byte) leftMotor);
@@ -151,6 +191,7 @@ public class TurtleDemo
 						
 					}
 					camOff();
+					timerResume();
 				}
 			} 
 			catch(Exception e)
@@ -337,11 +378,16 @@ public class TurtleDemo
 	
 	private void timerResume()
 	{
-		
+		byte[] serial = arduino.serialize();
+		t = new Timer();
+		arduino = new Arduino(com);
+		arduino.deserialize(serial);
+		t.schedule(arduino, 0, 100);
 	}
 
 	public TurtleDemo(String com)
 	{
+		this.com = com;
 		t = new Timer();
 		arduino = new Arduino(com);
 		t.schedule(arduino, 0, 100);
@@ -427,7 +473,7 @@ public class TurtleDemo
 	
 	private XboxController xc;
 	private SerialPort serialPort;
-	
+	private String com;
 	public static void frame(String name)
 	{
 		JFrame frame = new JFrame("Arduino Pix");
