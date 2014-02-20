@@ -12,8 +12,10 @@ import jssc.SerialPortException;
 import java.awt.BorderLayout;
 import java.awt.Image;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStreamReader;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -30,11 +32,7 @@ public class TurtleDemo
 			@Override
 				public void run()
 				{
-					try {
-						serialPort.closePort();
-					} catch (SerialPortException e) {
-						e.printStackTrace();
-					}
+					arduino.closePort();
 					System.out.println("Shutdown works");
 				}
 			});
@@ -51,7 +49,7 @@ public class TurtleDemo
 		private byte servo4;
 		private boolean cumin;
 		private boolean[] cam;
-		private String com = "COM6";
+		private String com;
 		public boolean takePic()
 		{
 			return (cam[0] || cam[1] || cam[2]);
@@ -222,8 +220,10 @@ public class TurtleDemo
 				cam[i] = false;
 			}
 		}
-		public Arduino() {
+		public Arduino(String com) {
 			cam = new boolean[3];
+			this.com = com;
+			openPort();
 		}
 		public void openPort()
 		{
@@ -296,10 +296,10 @@ public class TurtleDemo
 	    }
 	}
 	private Arduino arduino;
-	public TurtleDemo()
+	public TurtleDemo(String com)
 	{
 		Timer t = new Timer();
-		arduino = new Arduino();
+		arduino = new Arduino(com);
 		t.schedule(arduino, 0, 100);
 	}
 	
@@ -392,9 +392,15 @@ public class TurtleDemo
   
 	public static void main(String[] args)
 	{
-		TurtleDemo demo = new TurtleDemo();
-		AddShutdownHook sample = demo.new AddShutdownHook();
-		sample.attachShutDownHook();
-		demo.execute();
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+	    	System.out.print("Enter com name:\n >>");
+	    	String com = br.readLine();
+			TurtleDemo demo = new TurtleDemo(com);
+			AddShutdownHook sample = demo.new AddShutdownHook();
+			sample.attachShutDownHook();
+			demo.execute();
+		} catch(Exception e)
+		{}
 	}
 }
