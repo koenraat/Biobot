@@ -45,10 +45,10 @@ public class TurtleDemo
 	{
 		private byte leftMotor;
 		private byte rightMotor;
-		private int servo1;
-		private int servo2;
-		private int servo3;
-		private int servo4;
+		private byte servo1;
+		private byte servo2;
+		private byte servo3;
+		private byte servo4;
 		private boolean cumin;
 		private boolean[] cam;
 		private String com = "COM6";
@@ -60,9 +60,6 @@ public class TurtleDemo
 		{
 			//send stuffs to arduinos;
 			try {
-				serialPort = new SerialPort(com);
-				serialPort.openPort();
-				serialPort.setParams(38400, 8, 1, 0);
 				
 				/*
 				 * handshake:
@@ -140,8 +137,7 @@ public class TurtleDemo
 							for(int j = 0; j < len; j++){
 								dataFromArdu[32*i+j] = dfa[i][j];
 							}
-						}
-						serialPort.closePort();			
+						}			
 						try {
 							Random rnd = new Random();
 							int n = rnd.nextInt(25000);
@@ -156,7 +152,6 @@ public class TurtleDemo
 						}
 						
 					}
-					serialPort.closePort();
 					camOff();
 				}
 			} 
@@ -182,28 +177,28 @@ public class TurtleDemo
 		public void setRightMotor(byte rightMotor) {
 			this.rightMotor = rightMotor;
 		}
-		public int getServo1() {
+		public byte getServo1() {
 			return servo1;
 		}
-		public void setServo1(int servo1) {
+		public void setServo1(byte servo1) {
 			this.servo1 = servo1;
 		}
-		public int getServo2() {
+		public byte getServo2() {
 			return servo2;
 		}
-		public void setServo2(int servo2) {
+		public void setServo2(byte servo2) {
 			this.servo2 = servo2;
 		}
-		public int getServo3() {
+		public byte getServo3() {
 			return servo3;
 		}
-		public void setServo3(int servo3) {
+		public void setServo3(byte servo3) {
 			this.servo3 = servo3;
 		}
-		public int getServo4() {
+		public byte getServo4() {
 			return servo4;
 		}
-		public void setServo4(int servo4) {
+		public void setServo4(byte servo4) {
 			this.servo4 = servo4;
 		}
 		public void cuminOn() {
@@ -229,6 +224,26 @@ public class TurtleDemo
 		}
 		public Arduino() {
 			cam = new boolean[3];
+		}
+		public void openPort()
+		{
+			try {
+				serialPort = new SerialPort(com);
+				serialPort.openPort();
+				serialPort.setParams(38400, 8, 1, 0);
+			} catch(Exception e)
+			{
+				System.out.println(e.getMessage());
+			}
+		}
+		public void closePort()
+		{
+			try {
+				serialPort.closePort();
+			} catch(Exception e)
+			{
+				System.out.println(e.getMessage());
+			}
 		}
 		
 	}
@@ -364,7 +379,6 @@ public class TurtleDemo
 	public static void frame(String name)
 	{
 		JFrame frame = new JFrame("Arduino Pix");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		try{
 			Image image = ImageIO.read(new File(name));
 			JLabel lblimage = new JLabel(new ImageIcon(image));
