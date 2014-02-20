@@ -280,6 +280,36 @@ public class TurtleDemo
 	    	rightThumbDirection = direction;
 	    }
 	    
+	    public void buttonX(boolean pressed)
+	    {
+	    	if(pressed){
+	    		arduino.cuminOn();
+	    	}else{
+	    		arduino.cuminOff();
+	    	}
+	    }
+	    
+	    public void buttonA(boolean pressed)
+	    {
+	    	if(pressed){
+	    		arduino.camOn(2);
+	    	}
+	    }
+	    
+	    public void buttonB(boolean pressed)
+	    {
+	    	if(pressed){
+	    		arduino.camOn(1);
+	    	}
+	    }
+	    
+	    public void buttonY(boolean pressed)
+	    {
+	    	if(pressed){
+	    		arduino.camOn(0);
+	    	}
+	    }
+	    
 	    public void start(boolean pressed)
 	    {
 	    	if(pressed) {
@@ -298,14 +328,21 @@ public class TurtleDemo
 	}
 	
 	private Arduino arduino;
-<<<<<<< HEAD
-	public TurtleDemo(String com)
-=======
+	private Timer t;
 	
-	public TurtleDemo()
->>>>>>> Change
+	private void timerStop()
 	{
-		Timer t = new Timer();
+		t.cancel();
+	}
+	
+	private void timerResume()
+	{
+		
+	}
+
+	public TurtleDemo(String com)
+	{
+		t = new Timer();
 		arduino = new Arduino(com);
 		t.schedule(arduino, 0, 100);
 		
@@ -369,20 +406,20 @@ public class TurtleDemo
 		double x = rightThumbMagnitudeTemp*Math.cos(Math.toRadians(rightThumbDirectionTemp));
 		double y = rightThumbMagnitudeTemp*Math.sin(Math.toRadians(rightThumbDirectionTemp));
 		
-		byte servo3 = arduino.getServo3() + (byte) Math.round(x*18);
+		byte servo3 = (byte) (arduino.getServo3() + Math.round(x*18));
 		if (servo3 > 180){
-			arduino.setServo3(180);
+			arduino.setServo3((byte) 180);
 		} else if (servo3 < 0){
-			arduino.setServo3(0);
+			arduino.setServo3((byte) 0);
 		} else {
 			arduino.setServo3(servo3);
 		}
 		
-		byte servo4 = arduino.getServo4() + (byte) Math.round(y*18);
+		byte servo4 = (byte) (arduino.getServo4() + Math.round(y*18));
 		if (servo4 > 180){
-			arduino.setServo4(180);
+			arduino.setServo4((byte) 180);
 		} else if (servo4 < 0){
-			arduino.setServo4(0);
+			arduino.setServo4((byte) 0);
 		} else {
 			arduino.setServo4(servo4);
 		}
@@ -414,7 +451,6 @@ public class TurtleDemo
 			TurtleDemo demo = new TurtleDemo(com);
 			AddShutdownHook sample = demo.new AddShutdownHook();
 			sample.attachShutDownHook();
-			demo.execute();
 		} catch(Exception e)
 		{}
 	}
