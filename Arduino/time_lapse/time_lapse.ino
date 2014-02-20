@@ -1,10 +1,24 @@
 #include <Adafruit_VC0706.h>
 #include <SoftwareSerial.h>
+#include <Servo.h>
 
-/* ==== ERRORS ==== */
-/* 2 = Camera Error
- 3 = Failed to Snap
- */
+#define MOTOR_A 0
+#define MOTOR_B 1
+#define CW 0
+#define CCW 1
+#define DIRA 12
+#define PWMA 3
+#define DIRB 13
+#define PWMB 11
+#define SERVO1 5
+#define SERVO2 6
+#define SERVO3 9
+#define SERVO4 10
+
+Servo servo1;
+Servo servo2;
+Servo servo3;
+Servo servo4;
 
 Adafruit_VC0706 cam = Adafruit_VC0706(&Serial2);
 void takepic();
@@ -22,15 +36,19 @@ uint8_t cam2 = 0;
 uint8_t cam3 = 0;
 uint8_t cumin = 0;
 
+
+
 void setup() {
   Serial1.begin(38400);
   Serial.begin(38400);
+  setupArdumoto();
+  servo1.attach(SERVO1);
+  servo2.attach(SERVO2);
+  servo3.attach(SERVO3);
+  servo4.attach(SERVO4);
 
   if (cam.begin()) {
-    cam.getVersion();
-    cam.setImageSize(VC0706_320x240);
     cam.setCompression(250);
-    uint8_t imgsize = cam.getImageSize();
     cam.resumeVideo();
   } 
   else {
@@ -52,7 +70,15 @@ void loop()
     cam1 = magic & 0x3;
     cam2 = (magic >> 2) & 0x3;
     cam3 = (magic >> 4) & 0x3;
-    cumin = (magic >> 6) 0x3;
+    cumin = (magic >> 6) & 0x3;
+    
+    velocityToArdu(MOTOR_A, left);
+    velocityToArdu(MOTOR_B, right);
+    
+    servo1.write(s1);
+    servo2.write(s2);
+    servo3.write(s3);
+    servo4.write(s4);
     
     if(cam1 || cam2 || cam3)
     {
@@ -65,6 +91,17 @@ void loop()
     }
   }
 }
+
+void velocityToArdu(uint8_t motor, uint8_t v)
+{
+  if(v > 0)
+  {
+    driveArdumoto(motor, CW, v);
+  } else {
+    driveArdumoto(motor, CCW, (-1)*v);
+  }
+}
+
 void takepic() {
     if(cam1)
     {
@@ -103,4 +140,41 @@ void takepic() {
       jpglen -= bytesToRead;
     }
     cam.resumeVideo();
+}
+
+void driveArdumoto(byte motor, byte dir, byte spd) {
+
+
+  if (motor == MOTOR_A)
+  {
+    digitalWrite(DIRA, dir);
+    analogWrite(PWMA, spd);
+  }
+  else if (motor == MOTOR_B)
+  {
+    digitalWrite(DIRB, dir);
+    analogWrite(PWMB, spd);
+  }  
+}
+
+// stopArdumoto makes a motor stop
+void stopArdumoto(byte motor)
+{
+  driveArdumoto(motor, 0, 0);
+}
+
+// setupArdumoto initialize all pins
+void setupArdumoto()
+{
+  // All pins should be setup as outputs:
+  pinMode(PWMA, OUTPUT);
+  pinMode(PWMB, OUTPUT);
+  pinMode(DIRA, OUTPUT);
+  pinMode(DIRB, OUTPUT);
+
+  // Initialize all pins as low:
+  digitalWrite(PWMA, LOW);
+  digitalWrite(PWMB, LOW);
+  digitalWrite(DIRA, LOW);
+  digitalWrite(DIRB, LOW);
 }

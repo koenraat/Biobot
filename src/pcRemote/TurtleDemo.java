@@ -247,6 +247,7 @@ public class TurtleDemo
 		}
 		
 	}
+	
 	private class MyXboxControllerAdapter extends XboxControllerAdapter
 	{	
 		public void leftThumbMagnitude(double magnitude)
@@ -295,16 +296,26 @@ public class TurtleDemo
 	    	}
 	    }
 	}
+	
 	private Arduino arduino;
+<<<<<<< HEAD
 	public TurtleDemo(String com)
+=======
+	
+	public TurtleDemo()
+>>>>>>> Change
 	{
 		Timer t = new Timer();
 		arduino = new Arduino(com);
 		t.schedule(arduino, 0, 100);
+		
+		xc = new XboxController();
+		xc.addXboxControllerListener(new MyXboxControllerAdapter());
+		xc.setLeftThumbDeadZone(0.2);
+		xc.setRightThumbDeadZone(0.2);
 	}
 	
 	private double leftThumbMagnitude, leftThumbDirection;
-	
 	private void setMotorSpeeds(double leftThumbMagnitudeTemp, double leftThumbDirectionTemp)
 	{
 		double leftMotor = 127 * leftThumbMagnitudeTemp;
@@ -338,43 +349,47 @@ public class TurtleDemo
 		arduino.setRightMotor((byte) Math.round(rightMotor));
 	}
 	
+	private double leftTrigger, rightTrigger;
 	private void setFingerServosMagnitude(double leftTriggerTemp, double rightTriggerTemp)
 	{
 		if(leftTriggerTemp > 0){
-			smallFingerAngle = (byte) Math.round(leftTriggerTemp * (127 - 0) + 127);
-			bigFingerAngle = (byte) Math.round(leftTriggerTemp * (127 - 0) + 127);
+			arduino.setServo1((byte) Math.round(leftTriggerTemp * (127 - 0) + 127));
+			arduino.setServo2((byte) Math.round(leftTriggerTemp * (127 - 0) + 127));
 		} else if (leftTriggerTemp == 0){
-			bigFingerAngle = (byte) Math.round(-rightTriggerTemp * (255 - 0) + 127);
+			arduino.setServo1((byte) 127);
+			arduino.setServo2((byte) Math.round(-rightTriggerTemp * (255 - 0) + 127));
 		} else {
 			System.err.println("leftTrigger < 0");
 		}
 	}
 	
-	private double leftTrigger, rightTrigger;
-	private byte smallFingerAngle, bigFingerAngle;
-	
 	private double rightThumbMagnitude, rightThumbDirection;
-	private byte horizontalLampServoAngle, verticalLampServoAngle;
-	
-	private void setLampServosMagnitude()
+	private void setLampServosMagnitude(double rightThumbMagnitudeTemp, double rightThumbDirectionTemp)
 	{
+		double x = rightThumbMagnitudeTemp*Math.cos(Math.toRadians(rightThumbDirectionTemp));
+		double y = rightThumbMagnitudeTemp*Math.sin(Math.toRadians(rightThumbDirectionTemp));
 		
+		byte servo3 = arduino.getServo3() + (byte) Math.round(x*18);
+		if (servo3 > 180){
+			arduino.setServo3(180);
+		} else if (servo3 < 0){
+			arduino.setServo3(0);
+		} else {
+			arduino.setServo3(servo3);
+		}
+		
+		byte servo4 = arduino.getServo4() + (byte) Math.round(y*18);
+		if (servo4 > 180){
+			arduino.setServo4(180);
+		} else if (servo4 < 0){
+			arduino.setServo4(0);
+		} else {
+			arduino.setServo4(servo4);
+		}
 	}
 	
 	private XboxController xc;
 	private SerialPort serialPort;
-	
-	public void execute()
-	{
-		xc = new XboxController();
-		xc.addXboxControllerListener(new MyXboxControllerAdapter());
-		xc.setLeftThumbDeadZone(0.2);
-		xc.setRightThumbDeadZone(0.2);
-		
-		System.out.println("Turtledemo");
-		
-		
-	}
 	
 	public static void frame(String name)
 	{
