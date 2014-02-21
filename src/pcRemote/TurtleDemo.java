@@ -39,16 +39,16 @@ public class TurtleDemo
 			System.out.println("Shut Down Hook Attached.");
 		}
 	}
-	private class Arduino extends TimerTask
+	private class Arduino
 	{
-		private byte leftMotor;
-		private byte rightMotor;
-		private byte servo1;
-		private byte servo2;
-		private byte servo3;
-		private byte servo4;
-		private boolean cumin;
-		private boolean[] cam;
+		private byte leftMotor = 0;
+		private byte rightMotor = 0;
+		private byte servo1 = 0;
+		private byte servo2 = 0;
+		private byte servo3 = 60;
+		private byte servo4 = 60;
+		private byte cumin = 0;
+		private byte[] cam;
 		private String com;
 		private byte toByte(boolean a)
 		{
@@ -61,8 +61,9 @@ public class TurtleDemo
 		}
 		public boolean toBool(byte a)
 		{
-			if(a == 1)
+			if(a > 0)
 			{
+				System.out.println("true");
 				return true;
 			}
 			else 
@@ -78,24 +79,51 @@ public class TurtleDemo
 			servo2 = des[3];
 			servo3 = des[4];
 			servo4 = des[5];
-			cumin = toBool(des[6]);
-			cam[0] = toBool(des[7]);
-			cam[1] = toBool(des[8]);
-			cam[2] = toBool(des[9]);
+			cumin = des[6];
+			cam[0] = des[7];
+			cam[1] = des[8];
+			cam[2] = des[9];
 		}
 		public byte[] serialize()
 		{
-			byte[] ret = {leftMotor, rightMotor, servo1, servo2, servo3, servo4, toByte(cumin), toByte(cam[0]), toByte(cam[1]), toByte(cam[2])};
+			byte[] ret = {leftMotor, rightMotor, servo1, servo2, servo3, servo4, cumin, cam[0], cam[1], cam[2]};
 			return ret;
 		}
 		public boolean takePic()
 		{
-			return (cam[0] || cam[1] || cam[2]);
+			return (cam[0] == 1 || cam[1] == 1 || cam[2] == 1);
 		}
 		public void run()
 		{
 			//send stuffs to arduinos;
+			System.out.println("I am in arduino");
 			
+			/*BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+			System.out.print("Gimme 10 nums:\n >>");
+			String cmnd = "0 0 0 0 0 0 0 0 0 0";
+	    	try { cmnd = br.readLine();} catch(Exception e) {}
+	    	if(cmnd.equals(""))
+	    	{
+	    		closePort();
+	    		return;
+	    	}
+	    	String[] com_ = cmnd.split(" ");
+	    	byte[] ret = new byte[10];
+	    	for(int i = 0; i < 10; i++)
+	    	{
+	    		System.out.println(com_[i]);
+	    		ret[i] = (byte) Integer.parseInt(com_[i]);
+	    	}
+	    	
+	    	System.out.println("???");
+	    	
+	    	deserialize(ret);*/
+	    	
+	    	System.out.println("???");
+			
+			setMotorSpeeds(leftThumbMagnitude, leftThumbDirection);
+			setFingerServosMagnitude(leftTrigger, rightTrigger);
+			setLampServosMagnitude(rightThumbMagnitude, rightThumbDirection);
 			try {
 				
 				/*
@@ -108,62 +136,118 @@ public class TurtleDemo
 				 * 1B - s4
 				 * 1B - reszta
 				 */
-				
+				System.out.println("Bede slaw");
 				if(takePic())
 				{
+					System.out.println("Jezdę w pętlę");
 					serialPort.writeByte((byte) 0);
 					serialPort.writeByte((byte) 0);	
-					timerStop();
+					//timerStop();
 				}
 				else{
 					serialPort.writeByte((byte) leftMotor);
+					System.out.println((byte) leftMotor);
 					serialPort.writeByte((byte) rightMotor);
+					System.out.println((byte) rightMotor);
 				}
 				
 				serialPort.writeByte((byte) servo1);
+				System.out.println((byte) servo1);
 				serialPort.writeByte((byte) servo2);
+				System.out.println((byte) servo2);
 				serialPort.writeByte((byte) servo3);
+				System.out.println((byte) servo3);
 				serialPort.writeByte((byte) servo4);
+				System.out.println((byte) servo4);
 				
 				//lastbyte:
-				byte lastbyte = 0;
-				
-				for(int i = 0; i < 0; i++)
+				if(cumin == 1)
 				{
-					if(cam[i])
-					{
-						lastbyte = (byte) (lastbyte | (0x3 << i));
-					}
+					serialPort.writeByte((byte) 255);
+				}
+				else
+				{
+					serialPort.writeByte((byte) 0);
 				}
 				
-				if(cumin)
+				//System.out.println((byte) lastbyte);
+				//System.out.println("Magic stuff:");
+				for(int i = 0; i < 3; i++)
 				{
-					lastbyte = (byte) (lastbyte | 0xC);
+					//if(cam[i] == 1)
+					//{
+					//	serialPort.writeByte((byte) 255);
+					//	System.out.print(i);
+					////	System.out.println(" 1");
+					//}
+					//else {
+						serialPort.writeByte((byte) cam[i]);
+						System.out.println((byte) cam[i]);
+					//}
 				}
-				
-				serialPort.writeByte(lastbyte);
 				
 				System.out.println("Przywitalem sie!");
 				
+				serialPort.purgePort(SerialPort.PURGE_RXCLEAR | SerialPort.PURGE_TXCLEAR);
+				
 				if(takePic())
 				{
-					byte[] dataToWrite = serialPort.readBytes(2);
+					System.out.println("TakePic!");
+					long now = System.currentTimeMillis();
+					while(System.currentTimeMillis()-now < 300){}
+					int[] dataToWrite = serialPort.readIntArray(2);
+					
 					System.out.println(dataToWrite[0]);
 					System.out.println(dataToWrite[1]);
-					int length = dataToWrite[0] + (dataToWrite[1] << 8);
+					System.out.println((int)dataToWrite[0]);
+					System.out.println((int)dataToWrite[1]);
+					System.out.println((byte)dataToWrite[1] << 8);
+					System.out.println((int)dataToWrite[1] << 8);
+					//byte length = (byte) ( dataToWrite[0] | ( dataToWrite[1] << 8));
+					int length = ( dataToWrite[0] | ( dataToWrite[1] << 8));
+					System.out.println((byte) length);
+					System.out.println((int) length);
+					//System.out.println((byte) length2);
+					//System.out.println((int) length2);
+					
+//					-116
+//					-78
+//					-116
+//					-78
+//					-19968
+//					-19968
+//					-116
+//					-116
+//					-116
+//					-116
+//					Zczytano-116
+					
+//					-56
+//					-61
+//					-56
+//					-61
+//					-15616
+//					-15616
+//					-56
+//					-56
+//					-56
+//					-56
+//					Zczytano-56
 					
 					System.out.println("Zczytano" + length);
 					
 					if(length > 0)
 					{
 						byte[] dataFromArdu = new byte[length];
-						int packages = (int) Math.ceil(length/(32));
+						int packages = (int) Math.ceil((double)length/(double)32);
 						int len = 32;
 						byte[][] dfa = new byte[packages][32];
 						for(int i = 0; i < packages; i++) {
 							if(i == packages-1) {
 								len = length % 32;
 							}
+//							now = System.currentTimeMillis();
+//							while(System.currentTimeMillis()-now < 10){}
 							System.out.println("Teraz bede zczytywal:"+i+" z "+packages+ " o dlugosci "+len);
 							dfa[i] = serialPort.readBytes(len);
 						}
@@ -191,17 +275,12 @@ public class TurtleDemo
 						
 					}
 					camOff();
-					timerResume();
+					//timerResume();
 				}
 			} 
 			catch(Exception e)
 			{
-				
-			}
-			try{
-				serialPort.closePort();
-			} catch(Exception e) {
-				
+				System.out.println(e.getMessage());
 			}
 		}
 		public byte getLeftMotor() {
@@ -241,28 +320,32 @@ public class TurtleDemo
 			this.servo4 = servo4;
 		}
 		public void cuminOn() {
-			cumin = true;
+			cumin = 1;
 		}
 		public void cuminOff() {
-			cumin = false;
+			cumin = 0;
 		}
 		public void camOn(int i) {
 			for(int j = 0; j < 3; j++) {
 				if(j == i) {
-					cam[i] = true;
+					cam[j] = 1;
 				}
 				else {
-					cam[i] = false;
+					cam[j] = 0;
 				}
 			}
 		}
 		public void camOff() {
 			for(int i = 0; i < 3; i++) {
-				cam[i] = false;
+				cam[i] = 0;
 			}
 		}
 		public Arduino(String com) {
-			cam = new boolean[3];
+			cam = new byte[3];
+			cam[0] = 0;
+			cam[1] = 0;
+			cam[2] = 0;
+			System.out.println("Arduino opened!");
 			this.com = com;
 			openPort();
 		}
@@ -333,6 +416,7 @@ public class TurtleDemo
 	    public void buttonA(boolean pressed)
 	    {
 	    	if(pressed){
+	    		System.out.println("Pressed A");
 	    		arduino.camOn(2);
 	    	}
 	    }
@@ -340,6 +424,7 @@ public class TurtleDemo
 	    public void buttonB(boolean pressed)
 	    {
 	    	if(pressed){
+	    		System.out.println("Pressed B");
 	    		arduino.camOn(1);
 	    	}
 	    }
@@ -347,6 +432,7 @@ public class TurtleDemo
 	    public void buttonY(boolean pressed)
 	    {
 	    	if(pressed){
+	    		System.out.println("Pressed Y");
 	    		arduino.camOn(0);
 	    	}
 	    }
@@ -363,39 +449,33 @@ public class TurtleDemo
 	    public void back(boolean pressed)
 	    {
 	    	if(pressed){
+	    		arduino.closePort();
+	    		System.out.println("arduino.closePort()");
 	    		System.exit(0);
 	    	}
 	    }
 	}
 	
 	private Arduino arduino;
-	private Timer t;
-	
-	private void timerStop()
-	{
-		t.cancel();
-	}
-	
-	private void timerResume()
-	{
-		byte[] serial = arduino.serialize();
-		t = new Timer();
-		arduino = new Arduino(com);
-		arduino.deserialize(serial);
-		t.schedule(arduino, 0, 100);
-	}
-
 	public TurtleDemo(String com)
 	{
-		this.com = com;
-		t = new Timer();
-		arduino = new Arduino(com);
-		t.schedule(arduino, 0, 100);
-		
 		xc = new XboxController();
 		xc.addXboxControllerListener(new MyXboxControllerAdapter());
 		xc.setLeftThumbDeadZone(0.2);
 		xc.setRightThumbDeadZone(0.2);
+		
+		this.com = com;
+		arduino = new Arduino(com);
+		arduino.run();
+		long now = System.currentTimeMillis();
+		while(true)
+		{
+			if(System.currentTimeMillis()-now > 500)
+			{
+				arduino.run();
+				now = System.currentTimeMillis();
+			}
+		}
 	}
 	
 	private double leftThumbMagnitude, leftThumbDirection;
@@ -440,7 +520,7 @@ public class TurtleDemo
 			arduino.setServo2((byte) Math.round(leftTriggerTemp * (127 - 0) + 127));
 		} else if (leftTriggerTemp == 0){
 			arduino.setServo1((byte) 127);
-			arduino.setServo2((byte) Math.round(-rightTriggerTemp * (255 - 0) + 127));
+			arduino.setServo2((byte) Math.round(-rightTriggerTemp * (127 - 0) + 127));
 		} else {
 			System.err.println("leftTrigger < 0");
 		}
@@ -452,22 +532,22 @@ public class TurtleDemo
 		double x = rightThumbMagnitudeTemp*Math.cos(Math.toRadians(rightThumbDirectionTemp));
 		double y = rightThumbMagnitudeTemp*Math.sin(Math.toRadians(rightThumbDirectionTemp));
 		
-		byte servo3 = (byte) (arduino.getServo3() + Math.round(x*18));
-		if (servo3 > 180){
-			arduino.setServo3((byte) 180);
+		int servo3 = (int) ((int)arduino.getServo3() + (int)Math.round(x*18.0));
+		if (servo3 > 120){
+			arduino.setServo3((byte) 120);
 		} else if (servo3 < 0){
 			arduino.setServo3((byte) 0);
 		} else {
-			arduino.setServo3(servo3);
+			arduino.setServo3((byte)servo3);
 		}
 		
-		byte servo4 = (byte) (arduino.getServo4() + Math.round(y*18));
-		if (servo4 > 180){
-			arduino.setServo4((byte) 180);
+		int servo4 = (int) (arduino.getServo4() + Math.round(y*(double)18));
+		if (servo4 > 120){
+			arduino.setServo4((byte) 120);
 		} else if (servo4 < 0){
 			arduino.setServo4((byte) 0);
 		} else {
-			arduino.setServo4(servo4);
+			arduino.setServo4((byte) servo4);
 		}
 	}
 	
